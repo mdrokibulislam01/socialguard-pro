@@ -1,1 +1,83 @@
-
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SocialGuard Pro</title><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070d1f;--panel:#0e1832;--line:#1b2a52;--tx:#e6ecff;--mut:#8b9bc4;--blue:#3b82f6;--blue2:#60a5fa;--ok:#34d399;--warn:#fbbf24}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 'Plus Jakarta Sans',system-ui,sans-serif}
+a{color:var(--blue2)}button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue2);outline-offset:2px}
+#app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+nav{background:var(--panel);border-right:1px solid var(--line);padding:22px 14px;position:sticky;top:0;height:100vh}
+.logo{font-weight:800;font-size:18px;padding:0 10px 22px;letter-spacing:-.3px}.logo i{color:var(--blue);font-style:normal}
+nav button{display:block;width:100%;text-align:left;background:none;border:0;padding:10px 12px;border-radius:8px;color:var(--mut);cursor:pointer;transition:.2s}
+nav button:hover,nav button.on{background:#16254b;color:var(--tx)}
+main{padding:30px;max-width:1100px;width:100%}h1{font-size:26px;margin:0 0 4px;letter-spacing:-.5px}.sub{color:var(--mut);margin:0 0 24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+.big{font-size:34px;font-weight:800;color:var(--blue2);letter-spacing:-1px}.lab{color:var(--mut);font-size:13px}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.row:last-child{border:0}.url{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46vw}
+.tag{font-size:12px;padding:2px 9px;border-radius:99px;background:#16254b;color:var(--blue2);white-space:nowrap}
+label{display:block;margin:14px 0 5px;color:var(--mut);font-size:13px}
+input,select,textarea{width:100%;background:#0a1228;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+textarea{min-height:110px}.chk{display:flex;gap:10px;align-items:flex-start;margin-top:14px;color:var(--tx);font-size:14px}.chk input{width:auto;margin-top:4px}
+.btn{background:var(--blue);border:0;color:#fff;padding:10px 18px;border-radius:8px;font-weight:700;cursor:pointer;transition:.2s}.btn:hover{background:#2563eb}
+.btn.g{background:#16254b;color:var(--tx)}.err{color:#fca5a5;margin-top:10px}.note{color:var(--mut);font-size:13px}
+.steps{display:flex;gap:6px;margin:16px 0;flex-wrap:wrap}.st{font-size:12px;padding:5px 10px;border-radius:99px;background:#0a1228;border:1px solid var(--line);color:var(--mut)}
+.st.done{border-color:var(--blue);color:var(--blue2)}.st.now{background:var(--blue);color:#fff;border-color:var(--blue)}
+pre{white-space:pre-wrap;background:#0a1228;border:1px solid var(--line);border-radius:8px;padding:14px;font:inherit;font-size:14px}
+.bar{height:8px;background:#0a1228;border-radius:9px;overflow:hidden;margin-top:6px}.bar b{display:block;height:100%;background:var(--blue);transition:width .8s}
+.auth{max-width:380px;margin:12vh auto;padding:0 16px}.tl{border-left:2px solid var(--line);padding-left:14px;margin:8px 0}.tl div{margin:10px 0;font-size:14px}
+@media(max-width:760px){#app{grid-template-columns:1fr}nav{position:static;height:auto;display:flex;flex-wrap:wrap;gap:4px}.logo{width:100%;padding-bottom:6px}nav button{width:auto}main{padding:18px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><div id="root"></div>
+<script>
+const $=s=>document.querySelector(s),root=$('#root');let META;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(p,o={}){const r=await fetch('/api'+p,o.body instanceof FormData?{...o,credentials:'same-origin'}:{headers:{'Content-Type':'application/json'},...o,body:o.body&&JSON.stringify(o.body)});
+ const d=await r.json().catch(()=>({}));if(r.status===401&&!p.startsWith('/auth'))return login();if(!r.ok)throw Error(d.error||'Request failed');return d}
+const SL={investigation_started:'Investigation started',evidence_collected:'Evidence collected',complaint_prepared:'Complaint prepared',complaint_submitted:'Complaint submitted',under_review:'Under platform review',action_taken:'Action taken',closed:'Case closed'};
+function login(reg){root.innerHTML=`<div class="auth card"><div class="logo">Social<i>Guard</i> Pro</div><p class="note">Prepare evidence-backed reports for genuine abuse. You review and submit every report yourself.</p>
+${reg?'<label>Name</label><input id=n>':''}<label>Email</label><input id=e type=email><label>Password</label><input id=p type=password>
+<p><button class=btn id=go>${reg?'Create account':'Sign in'}</button> <button class="btn g" id=sw>${reg?'I have an account':'Create account'}</button></p><div class=err id=er></div></div>`;
+ $('#sw').onclick=()=>login(!reg);$('#go').onclick=async()=>{try{await api('/auth/'+(reg?'register':'login'),{method:'POST',body:{name:reg?$('#n').value:'',email:$('#e').value,password:$('#p').value}});start()}catch(x){$('#er').textContent=x.message}}}
+async function start(){try{META=await api('/meta')}catch{return}shell();go('dash')}
+function shell(){root.innerHTML=`<div id=app><nav><div class=logo>Social<i>Guard</i> Pro</div><button data-v=dash>Dashboard</button><button data-v=cases>Cases</button><button data-v=new>New case</button><button id=lo>Sign out</button></nav><main id=m></main></div>`;
+ document.querySelectorAll('nav [data-v]').forEach(b=>b.onclick=()=>go(b.dataset.v));$('#lo').onclick=async()=>{await api('/auth/logout',{method:'POST'});login()}}
+function go(v,id){document.querySelectorAll('nav [data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));({dash,cases,newCase,detail})[v==='case'?'detail':v==='new'?'newCase':v](id)}
+const rows=a=>a.map(c=>`<div class=row data-id=${c.id}><span class=url>${esc(c.url)}</span><span><span class=tag>${c.platform}</span> <span class=tag>${esc(SL[c.status])}</span></span></div>`).join('')||'<p class=note>No cases yet. Open a new case to begin.</p>';
+const bindRows=()=>document.querySelectorAll('.row[data-id]').forEach(r=>r.onclick=()=>go('case',r.dataset.id));
+async function dash(){const s=await api('/stats'),max=Math.max(1,...s.platforms.map(p=>p.n));
+ $('#m').innerHTML=`<h1>Dashboard</h1><p class=sub>Outcomes are shown only when you record them from a platform notice.</p><div class=grid>
+ ${[['Investigated accounts',s.total],['Complaints prepared',s.prepared],['Submitted',s.submitted],['Resolved',s.resolved]].map(x=>`<div class=card><div class=big>${x[1]}</div><div class=lab>${x[0]}</div></div>`).join('')}</div>
+ <div class=grid style="margin-top:14px;grid-template-columns:1fr 2fr"><div class=card><b>By platform</b>${['facebook','instagram','tiktok'].map(p=>{const n=(s.platforms.find(x=>x.platform===p)||{}).n||0;return`<div style="margin-top:12px"><span class=lab>${p} (${n})</span><div class=bar><b style="width:${n/max*100}%"></b></div></div>`}).join('')}</div>
+ <div class=card><b>Recent investigations</b>${rows(s.recent)}</div></div>`;bindRows()}
+async function cases(){$('#m').innerHTML=`<h1>Cases</h1><p class=sub>&nbsp;</p><div class=card>${rows(await api('/cases'))}</div>`;bindRows()}
+function newCase(){$('#m').innerHTML=`<h1>New case</h1><p class=sub>The platform is detected from the URL. Nothing is scraped or verified automatically.</p><div class=card style="max-width:640px">
+<label>Profile URL (Facebook, Instagram or TikTok)</label><input id=u><label>Violation category</label><select id=c>${Object.entries(META.CATS).map(([k,v])=>`<option value=${k}>${v}</option>`).join('')}</select>
+<label>Your relationship to this case</label><select id=r><option value=self>I am the person affected</option><option value=rep>I represent the affected person or rights holder</option><option value=witness>I am a user who found this account</option></select>
+<label>What happened (facts only)</label><textarea id=d></textarea><div id=cp style="display:none"><label>Original content URL</label><input id=o>
+<div class=chk><input type=checkbox id=ow><span>I own this content or am authorized to act for the owner.</span></div></div>
+<div class=chk><input type=checkbox id=at><span>I confirm this report is truthful and made in good faith. I understand false reports can get my own accounts restricted and may be unlawful.</span></div>
+<p><button class=btn id=go>Open case</button></p><div class=err id=er></div></div>`;
+ $('#c').onchange=()=>$('#cp').style.display=$('#c').value==='copyright'?'block':'none';
+ $('#go').onclick=async()=>{try{const r=await api('/cases',{method:'POST',body:{url:$('#u').value.trim(),category:$('#c').value,relation:$('#r').value,description:$('#d').value,original_url:$('#o').value,owner_declared:$('#ow').checked,attest:$('#at').checked}});go('case',r.id)}catch(x){$('#er').textContent=x.message}}}
+async function detail(id){const d=await api('/cases/'+id),c=d.case,i=Object.keys(SL).indexOf(c.status);
+ $('#m').innerHTML=`<h1>${esc(META.CATS[c.category])} <span class=tag>${c.platform}</span></h1><p class=sub><a href="${esc(c.url)}" target=_blank rel="noopener noreferrer">${esc(c.url)}</a></p>
+ <div class=steps>${Object.values(SL).map((l,k)=>`<span class="st ${k<i?'done':k===i?'now':''}">${l}</span>`).join('')}</div>
+ <div class=grid style="grid-template-columns:1fr 1fr"><div class=card><b>Evidence</b>
+ ${d.evidence.map(e=>`<div class=row style="cursor:default"><span class=url>${e.kind==='file'?`<a href="/api/files/${e.value}" target=_blank>Uploaded file</a>`:esc(e.value)}</span><span class=note>${esc(e.note)}</span></div>`).join('')||'<p class=note>Add screenshots, post URLs and ownership proof.</p>'}
+ <label>Link</label><input id=ev placeholder="Post, video or profile URL"><label>Note</label><input id=en><p><button class="btn g" id=al>Add link</button></p>
+ <label>Screenshot or PDF (8 MB max)</label><input type=file id=ef accept="image/png,image/jpeg,image/webp,application/pdf"><p><button class="btn g" id=af>Upload</button></p><div class=err id=er></div></div>
+ <div class=card><b>Complaint drafts</b><p class=note>Drafted from your facts only. Edit, then submit it yourself on the official form.</p><p><button class=btn id=gc>Prepare complaint</button></p><div id=cm></div></div></div>
+ <div class=card style="margin-top:14px"><b>Tracking</b><p class=note>Record only what actually happened. "Action taken" needs the platform's notice pasted in.</p>
+ <label>Status</label><select id=ss>${Object.entries(SL).map(([k,v])=>`<option value=${k} ${k===c.status?'selected':''}>${v}</option>`).join('')}</select>
+ <label>Platform reference number (optional)</label><input id=rf value="${esc(c.reference||'')}"><label>Platform notice (required for Action taken)</label><textarea id=nt style="min-height:70px">${esc(c.outcome_note||'')}</textarea>
+ <div class=chk><input type=checkbox id=cf><span>I submitted this complaint myself on the official platform form.</span></div><p><button class=btn id=us>Update status</button></p>
+ <div class=tl>${d.events.map(e=>`<div>${esc(e.text)}<br><span class=note>${esc(e.created)} UTC</span></div>`).join('')}</div></div>`;
+ const er=m=>$('#er').textContent=m,refresh=()=>detail(id);
+ $('#al').onclick=async()=>{try{await api(`/cases/${id}/evidence`,{method:'POST',body:{kind:'url',value:$('#ev').value,note:$('#en').value}});refresh()}catch(x){er(x.message)}};
+ $('#af').onclick=async()=>{const f=new FormData();if(!$('#ef').files[0])return er('Choose a file');f.append('file',$('#ef').files[0]);f.append('note',$('#en').value);try{await api(`/cases/${id}/evidence`,{method:'POST',body:f});refresh()}catch(x){er(x.message)}};
+ $('#us').onclick=async()=>{try{await api(`/cases/${id}/status`,{method:'POST',body:{status:$('#ss').value,reference:$('#rf').value||undefined,note:$('#nt').value||undefined,confirm:$('#cf').checked}});refresh()}catch(x){er(x.message)}};
+ $('#gc').onclick=async()=>{const r=await api(`/cases/${id}/complaint`);$('#cm').innerHTML=`<label>English</label><pre>${esc(r.en)}</pre><label>বাংলা</label><pre>${esc(r.bn)}</pre><a class=btn style="display:inline-block;text-decoration:none" href="${r.form}" target=_blank rel="noopener noreferrer">Open official report page</a>`}}
+start().then(()=>{if(!META)login()});
+</script></body></html>
